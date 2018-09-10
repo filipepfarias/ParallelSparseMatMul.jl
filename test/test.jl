@@ -1,7 +1,5 @@
 addprocs(3)
-
-using Base.Test
-@everywhere require("src/ParallelSparseMatMul.jl")
+using Test
 @everywhere using ParallelSparseMatMul
 
 ### test matrix multiplication

@@ -1,5 +1,5 @@
 ### Initialization functions
-# Todo allow initialization on only some of the participating workers (ie SharedSparse...(...; pids=pids)), when @parallel allows arguments to run on only a subset of workers
+# Todo allow initialization on only some of the participating workers (ie SharedSparse...(...; pids=pids)), when @distributed allows arguments to run on only a subset of workers
 # XXX verify entries are sorted correctly, so A'' == A
 function shsprand(m,n,p; kwargs...)
     colptr = SharedArray(Int64,n+1; kwargs...)
@@ -31,7 +31,7 @@ end
 function shmem_randsample(n,minval,maxval;sorted_within=[], kwargs...)
     out = Base.shmem_rand(minval:maxval,n; kwargs...)
     # XXX do this in parallel ONLY ON PARTICIPATING WORKERS
-    @parallel for i=2:length(sorted_within)
+    @distributed for i=2:length(sorted_within)
         out[sorted_within[i-1]:sorted_within[i]-1] = sort(out[sorted_within[i-1]:sorted_within[i]-1])
     end
     return out

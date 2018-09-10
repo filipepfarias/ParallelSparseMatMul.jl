@@ -1,9 +1,9 @@
 #getindex(A::SharedSparseMatrixCSC, i::Integer) = getindex(A, ind2sub(size(A),i))
 
 
-getindex(A::SharedSparseMatrixCSC, I::@compat(Tuple{Integer,Integer})) = getindex(A, I[1], I[2])
+getindex(A::SharedSparseMatrixCSC, I::Tuple{Integer,Integer}) = getindex(A, I[1], I[2])
 
-function getindex{T}(A::SharedSparseMatrixCSC{T}, i0::Int, i1::Int)
+function getindex(A::SharedSparseMatrixCSC{T}, i0::Int, i1::Int) where T
     if !(1 <= i0 <= A.m && 1 <= i1 <= A.n); throw(BoundsError()); end
     first = A.colptr[i1]
     last = A.colptr[i1+1]-1
@@ -25,7 +25,7 @@ end
 #getindex{T<:Integer}(A::SharedSparseMatrixCSC, I::AbstractVector{T}, j::Integer) = getindex(A,I,[j])
 #getindex{T<:Integer}(A::SharedSparseMatrixCSC, i::Integer, J::AbstractVector{T}) = getindex(A,[i],J)
 
-function getindex_cols{Tv,Ti}(A::SharedSparseMatrixCSC{Tv,Ti}, J::AbstractVector)
+function getindex_cols(A::SharedSparseMatrixCSC{Tv,Ti}, J::AbstractVector) where {Tv, Ti}
 
     (m, n) = size(A)
     nJ = length(J)
