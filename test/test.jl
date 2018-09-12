@@ -1,6 +1,7 @@
 addprocs(3)
 using Test
 @everywhere using ParallelSparseMatMul
+@everywhere using SharedArrays
 
 ### test matrix multiplication
 # fails on travis CI test; the internet suggests adding the line
@@ -13,8 +14,8 @@ A = shsprand(m,n,p)
 @test size(A) == (m,n)
 @test size(A,1) == m
 L = operator(A);
-x = Base.shmem_rand(n);
-y = Base.shmem_rand(m);
+x = shmem_rand(n);
+y = shmem_rand(m);
 x_out = copy(x)
 y_out = copy(y)
 

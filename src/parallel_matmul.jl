@@ -35,6 +35,13 @@ display(L::SharedBilinearOperator) = display(L.A)
 size(L::SharedBilinearOperator) = size(L.A)
 size(L::SharedBilinearOperator,i::Int) = size(L.A)[i]
 
+"""
+   share(a::AbstractArray{T})
+
+    share an array accross workers
+"""
+
+
 function share(a::AbstractArray{T};kwargs...) where T
     sh = SharedArray{T,ndims(a)}(size(a);kwargs...)
     for i=1:length(a)
@@ -48,15 +55,15 @@ share(A::SharedSparseMatrixCSC,pids::AbstractVector{Int}) = (pids==A.pids ? A : 
 share(A::SharedArray,pids::AbstractVector{Int}) = (pids==A.pids ? A : share(sdata(A),pids))
 
 # For now, we transpose in serial
-function ctranspose(A::SharedSparseMatrixCSC)
+function adjoint(A::SharedSparseMatrixCSC)
     S = sdata(A)
-    ST = ctranspose(S)
+    ST = adjoint(S)
     return share(ST,A.pids)
 end
 
 function transpose(A::SharedSparseMatrixCSC)
     S = sdata(A)
-    ST = transpose(S)
+    ST = adjoint(S)
     return share(ST,A.pids)
 end
 
