@@ -1,5 +1,5 @@
 ### to do:
-# implement A_mul_B, not just At_mul_B, for sharedsparsematrix
+# implement A_mul_B, not just At_mul_B, for SharedSparsematrix
 # implement A_mul_B* with normal vectors, not just shared arrays, for sharedsparsematrix
 # implement load balancing for multiplication
 
@@ -26,6 +26,7 @@ mutable struct SharedBilinearOperator{Tv,Ti<:Integer}
     AT::SharedSparseMatrixCSC{Tv,Ti}
     pids::AbstractVector{Int}
 end
+
 operator(A::SparseMatrixCSC,pids) = SharedBilinearOperator(A.m,A.n,share(A),share(A'),pids)
 operator(A::SparseMatrixCSC) = operator(A::SparseMatrixCSC,workers())
 operator(A::SharedSparseMatrixCSC) = SharedBilinearOperator(A.m,A.n,A,A',A.pids)
@@ -38,7 +39,7 @@ size(L::SharedBilinearOperator,i::Int) = size(L.A)[i]
 """
    share(a::AbstractArray{T})
 
-    share an array accross workers
+Share an array accross workers
 """
 
 
@@ -49,6 +50,7 @@ function share(a::AbstractArray{T};kwargs...) where T
     end
     return sh
 end
+
 share(A::SparseMatrixCSC,pids::AbstractVector{Int}) = SharedSparseMatrixCSC(A.m,A.n,share(A.colptr,pids=pids),share(A.rowval,pids=pids),share(A.nzval,pids=pids),pids)
 share(A::SparseMatrixCSC) = share(A::SparseMatrixCSC,workers())
 share(A::SharedSparseMatrixCSC,pids::AbstractVector{Int}) = (pids==A.pids ? A : share(sdata(A),pids))
@@ -71,39 +73,41 @@ end
 
 # Shared sparse matrix multiplication
 # only works if sharedarrays lock on writes, but they do.
-# beta*y + alpha*A*x
 
 """
-  A_mul_B!(alpha::Number, A::SharedSparseMatrixCSC, x::SharedArray, beta::Number, y::SharedArray)
+   A_mul_B!(α::Number, A::SharedSparseMatrixCSC, x::SharedArray, β::Number, y::SharedArray)
+
+Do the shared sparse matrix - vector product   ``y += β * y + A* α x``
 
 """
-
-function A_mul_B!(alpha::Number, A::SharedSparseMatrixCSC, x::SharedArray, beta::Number, y::SharedArray)
+function A_mul_B!(α::Number, A::SharedSparseMatrixCSC, x::SharedArray, β::Number, y::SharedArray)
     A.n == length(x) || throw(DimensionMismatch(""))
     A.m == length(y) || throw(DimensionMismatch(""))
-    @sync @distributed for i = 1:A.m; y[i] *= beta; end
+    @sync @distributed for i = 1:A.m; y[i] *= β; end # y ← β*y
 
     res = @sync @distributed (+) for col = 1 : A.n
-        addtoy = zeros(typeof(beta), A.m)
-        col_mul_B!(alpha, A, x, addtoy, [col])
-        addtoy
+        addToY = zeros(typeof(β), A.m) # contribution to y of the local chunk
+        col_mul_B!(α, A, x, addToY, [col])
+        addToY
     end
     for (i,v) in enumerate(res)
-        y[i] = v
+        y[i] += v
     end
     y
 end
-#A_mul_B!(y::SharedArray, A::SharedSparseMatrixCSC, x::SharedArray) = A_mul_B!(one(eltype(x)), A, x, zero(eltype(y)), y)
-#A_mul_B(A::SharedSparseMatrixCSC, x::SharedArray) = A_mul_B!(Base.shmem_fill(zero(eltype(A)),A.m), A, x)
-#*(A::SharedSparseMatrixCSC, x::SharedArray) = A_mul_B(A, x)
+
+# proxi functions with simplified interface
+A_mul_B!(y::SharedArray, A::SharedSparseMatrixCSC, x::SharedArray) = A_mul_B!(one(eltype(x)), A, x, zero(eltype(y)), y)
+A_mul_B(A::SharedSparseMatrixCSC, x::SharedArray) = A_mul_B!(SharedArrays.shmem_fill(zero(eltype(A)),A.m), A, x)
+*(A::SharedSparseMatrixCSC, x::SharedArray) = A_mul_B(A, x)
+
 #
 """
   col_mul_B!(alpha::Number, A::SharedSparseMatrixCSC, x::SharedArray, y::Array, col_chunk::Array)
 
-  do the sparse matrix-vector multiplication  ``y \rightarrow 
+do the sparse matrix-vector multiplication  `y += A * α x` for the columns contained in `col_chunk`
 
 """
-
 function col_mul_B!(alpha::Number, A::SharedSparseMatrixCSC, x::SharedArray, y::Array, col_chunk::Array)
     nzv = A.nzval
     rv = A.rowval
