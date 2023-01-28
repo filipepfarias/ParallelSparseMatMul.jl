@@ -1,0 +1,4 @@
+name = "ParallelSparseMatMul"
+uuid = "050b11df-f466-4eac-b5f5-63aa0dea781f"
+authors = ["filipepfarias <filipepfarias@alu.ufc.br>"]
+version = "0.1.0"
