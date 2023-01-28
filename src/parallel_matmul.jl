@@ -138,9 +138,9 @@ function At_mul_B!(α::Number, A::SharedSparseMatrixCSC, x::SharedArray, β::Num
     y
 end
 At_mul_B!(y::SharedArray, A::SharedSparseMatrixCSC, x::SharedArray) = At_mul_B!(one(eltype(x)), A, x, zero(eltype(y)), y)
-At_mul_B(A::SharedSparseMatrixCSC, x::SharedArray) = At_mul_B!(Base.shmem_fill(zero(eltype(A)),A.n), A, x)
+At_mul_B(A::SharedSparseMatrixCSC, x::SharedArray) = At_mul_B!(SharedArrays.shmem_fill(zero(eltype(A)),A.n), A, x)
 Ac_mul_B!(y::SharedArray{T}, A::SharedSparseMatrixCSC{T}, x::SharedArray{T}) where {T<:Real}= At_mul_B!(y, A, x)
-Ac_mul_B(A::SharedSparseMatrixCSC, x::SharedArray) = Ac_mul_B!(Base.shmem_fill(zero(eltype(A)),A.n), A, x)
+Ac_mul_B(A::SharedSparseMatrixCSC, x::SharedArray) = Ac_mul_B!(SharedArrays.shmem_fill(zero(eltype(A)),A.n), A, x)
 
 function col_t_mul_B!(α::Number, A::SharedSparseMatrixCSC, x::SharedArray, β::Number, y::SharedArray, col_chunk::Array)
     nzv = A.nzval
