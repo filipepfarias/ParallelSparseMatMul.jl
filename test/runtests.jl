@@ -1,7 +1,7 @@
 using Distributed
 addrocs(3) # run all tests with 4 procs
 @everywhere using Test
-@everywhere using SharedSparseMatMul
+@everywhere using ParallelSparseMatMul
 @everywhere using LinearAlgebra
 @everywhere using SparseArrays
 @everywhere using SharedArrays

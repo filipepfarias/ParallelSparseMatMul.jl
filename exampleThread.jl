@@ -1,7 +1,7 @@
 using Test
 using Pkg
 Pkg.activate(".")
-using SharedSparseMatMul
+using ParallelSparseMatMul
 using BenchmarkTools
 import Statistics:median
 using SparseArrays

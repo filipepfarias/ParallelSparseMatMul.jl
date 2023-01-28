@@ -6,7 +6,7 @@ Initialize randomly a  `m` by `n` `SharedSparseMatrixCSC` with density factor `p
 
 # Examples
 ```julia-repl
-julia> Matrix(SharedSparseMatMul.shsprand(4,4,0.7))
+julia> Matrix(ParallelSparseMatMul.shsprand(4,4,0.7))
 4×4 Array{Float64,2}:
 0.941088  0.0        0.0       0.0
 0.0       0.0132652  0.580678  0.0192514

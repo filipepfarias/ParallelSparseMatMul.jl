@@ -4,7 +4,7 @@ addprocs(3)
 @everywhere using Pkg
 @everywhere Pkg.activate(".")
 @everywhere using SharedArrays
-@everywhere using SharedSparseMatMul
+@everywhere using ParallelSparseMatMul
 @everywhere using BenchmarkTools
 @everywhere import Statistics:median
 #  construct a trivial example with a triangular upper matrix
