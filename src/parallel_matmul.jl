@@ -45,8 +45,8 @@ Share an array accross workers
 
 function share(a::AbstractArray{T};kwargs...) where T
     sh = SharedArray{T,ndims(a)}(size(a);kwargs...)
-    for i=1:length(a)
-        sh.s[i] = a[i]
+    for i in eachindex(a)
+        @inbounds sh.s[i] = a[i]
     end
     return sh
 end
@@ -83,7 +83,10 @@ Do the shared sparse matrix - vector product   ``y += β * y + A* α x``
 function A_mul_B!(α::Number, A::SharedSparseMatrixCSC, x::SharedArray, β::Number, y::SharedArray)
     A.n == length(x) || throw(DimensionMismatch(""))
     A.m == length(y) || throw(DimensionMismatch(""))
-    @distributed for i = 1:A.m; y[i] *= β; end # y ← β*y
+
+    @distributed for i = 1:A.m; 
+        @inbounds y[i] *= β; 
+    end # y ← β*y
 
     res = @distributed (+) for col = 1 : A.n
         addToY = zeros(typeof(β), A.m) # contribution to y of the local chunk
@@ -108,13 +111,16 @@ A_mul_B(A::SharedSparseMatrixCSC, x::SharedArray) = A_mul_B!(SharedArrays.shmem_
 do the sparse matrix-vector multiplication  `y += A * α x` for the columns contained in `col_chunk`
 
 """
-function col_mul_B!(alpha::Number, A::SharedSparseMatrixCSC, x::SharedArray, y::Array, col_chunk::Array)
+function col_mul_B!(α::Number, A::SharedSparseMatrixCSC, x::SharedArray, y::Array, col_chunk::Array)
     nzv = A.nzval
     rv = A.rowval
-    for col in col_chunk
-        alphax = alpha*x[col]
-        @inbounds for k = A.colptr[col] : (A.colptr[col+1]-1)
-            y[rv[k]] += nzv[k]*alphax
+    @inbounds begin
+        for col in col_chunk
+            # y[col] *= β
+            αx = α*x[col]
+            for k = A.colptr[col] : (A.colptr[col+1]-1)
+                y[rv[k]] += nzv[k]*αx
+            end
         end
     end
     return 1
@@ -140,13 +146,13 @@ function col_t_mul_B!(α::Number, A::SharedSparseMatrixCSC, x::SharedArray, β::
     nzv = A.nzval
     rv = A.rowval
     @inbounds begin
-        for i in col_chunk
-            y[i] *= β
+        for col in col_chunk
+            y[col] *= β
             tmp = zero(eltype(y))
-            for j = A.colptr[i] : (A.colptr[i+1]-1)
+            for j = A.colptr[col] : (A.colptr[col+1]-1)
                 tmp += nzv[j]*x[rv[j]]
             end
-            y[i] += α*tmp
+            y[col] += α*tmp
         end
     end
     return 1 # finished
