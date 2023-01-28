@@ -1,6 +1,5 @@
-<<<<<<< HEAD
-name = "ParallelSparseMatMul2"
-uuid = "2aac5180-6ad3-44db-a740-7111277a8d82"
+name = "ParallelSparseMatMul"
+uuid = "050b11df-f466-4eac-b5f5-63aa0dea781f"
 authors = ["filipepfarias <filipepfarias@alu.ufc.br>"]
 version = "0.1.0"
 
@@ -8,9 +7,3 @@ version = "0.1.0"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 SharedArrays = "1a1011a3-84de-559e-8e89-a11a2f7dc383"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
-=======
-name = "ParallelSparseMatMul"
-uuid = "050b11df-f466-4eac-b5f5-63aa0dea781f"
-authors = ["filipepfarias <filipepfarias@alu.ufc.br>"]
-version = "0.1.0"
->>>>>>> main
